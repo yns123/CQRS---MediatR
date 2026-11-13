@@ -1,0 +1,35 @@
+@host = http://localhost:5099
+
+### 1) Etkinlik oluştur (startsAt gelecekte olmalı)
+# @name createEvent
+POST {{host}}/events
+Content-Type: application/json
+
+{ "name": "Rock Gecesi", "venue": "Harbiye", "startsAt": "2027-01-15T20:00:00Z", "seatCount": 20 }
+
+### 2) Etkinlikleri ara (Dapper)
+GET {{host}}/events?search=Rock&page=1&pageSize=10
+
+### 3) Koltuk haritası (Dapper)
+@eventId = {{createEvent.response.body.id}}
+GET {{host}}/events/{{eventId}}/seats
+
+### 4) Koltuk tut
+# @name reserve
+POST {{host}}/reservations
+Content-Type: application/json
+
+{ "eventId": "{{eventId}}", "seatNumber": 1, "customerEmail": "ali@example.com" }
+
+### 5) Onayla (koltuk Sold olur)
+@reservationId = {{reserve.response.body.reservationId}}
+POST {{host}}/reservations/{{reservationId}}/confirm
+
+### 6) İptal et (koltuk tekrar Available olur)
+DELETE {{host}}/reservations/{{reservationId}}
+
+### Doğrulama hatası denemesi -> 400
+POST {{host}}/reservations
+Content-Type: application/json
+
+{ "eventId": "{{eventId}}", "seatNumber": 0, "customerEmail": "gecersiz" }
